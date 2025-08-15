@@ -38,6 +38,10 @@ const mandelbrot =
     '    vec2 zSquared;\n' +
     '    zSquared.x = (z.x * z.x) - (z.y * z.y);\n' +
     '    zSquared.y = 2.0 * z.x * z.y;\n' +
+    '    if(zSquared.y > 0.0)\n' +
+    '    {\n' +
+    '        zSquared.y = zSquared.y * -1.0;\n' +
+    '    }\n' +
     '    return zSquared;\n' +
     '}\n' +
     'vec2 addComplex(vec2 z, vec2 c)\n' +
@@ -59,17 +63,16 @@ const mandelbrot =
     '    c = c / zoomMultiplier;\n' +
     '    c = c - mouseDelta;\n' +
     '\n' +
-    '\n' +
     '    vec4 color = vec4(52.0/255.0, 204.0/235.0, 235.0/255.0, 1.0);\n' +
     '\n' +
     '    vec2 z = vec2(0.0, 0.0);\n' +
     '\n' +
-    '    for(int i = 0; i< 100; i++)\n' +
+    '    for(int i = 0; i< 200; i++)\n' +
     '    {\n' +
     '        z = addComplex( squareComplex(z), c);\n' +
     '        if(magnitude(z) > 2.0)\n' +
     '        {\n' +
-    '            color = vec4(float(i)/100.0, float(i)/100.0, 0.0, 1.0);\n' +
+    '            color = vec4(float(i)/200.0, float(i)/200.0, 0.0, 1.0);\n' +
     '            break;\n' +
     '        }\n' +
     '    }\n' +
