@@ -1,7 +1,7 @@
 import './style.css'
 import * as THREE from 'three'
 import standardNodeLibrary from "three/src/renderers/webgpu/nodes/StandardNodeLibrary.js";
-
+const DIMENSIONS = 250;
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(
     - 1, // left
@@ -12,11 +12,16 @@ const camera = new THREE.OrthographicCamera(
     1, // far
 );
 
-const canvas = document.querySelector('#bg');
+const canvas = document.querySelector('#fractals');
 const renderer = new THREE.WebGLRenderer({canvas});
 
+
+
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize( window.innerWidth, window.innerHeight );
+canvas.width = DIMENSIONS;
+canvas.height = DIMENSIONS;
+console.log(canvas.width)
+renderer.setSize( canvas.width, canvas.height);
 renderer.render(scene, camera);
 
 let mouseDown = false;
@@ -24,89 +29,58 @@ let mouseStart = new THREE.Vector2();
 let mouseEnd = new THREE.Vector2();
 let mouseTotalDelta = new THREE.Vector2();
 
+const MandelbrotButton = document.getElementById("mandelbrotButton");
+const JuliaButton = document.getElementById("juliaButton");
+const BurningshipButton = document.getElementById("burningShipButton");
+const mandelbrotShader = document.getElementById("mandelbrotShader").textContent;
+const juliaShader = document.getElementById("juliaShader").textContent;
+const burningShipShader = document.getElementById("burningShipShader").textContent;
+
+
 const standard=
     'void main() {\n' +
     '    gl_Position = vec4(position, 1.0);\n' +
     '}\n'
 
-const mandelbrot =
-    'uniform vec3 iResolution;\n' +
-    'uniform vec2 mouseDelta;\n' +
-    'uniform float zoomMultiplier;\n' +
-    'vec2 squareComplex(vec2 z)\n' +
-    '{\n' +
-    '    vec2 zSquared;\n' +
-    '    zSquared.x = (z.x * z.x) - (z.y * z.y);\n' +
-    '    zSquared.y = 2.0 * z.x * z.y;\n' +
-    '    if(zSquared.y > 0.0)\n' +
-    '    {\n' +
-    '        zSquared.y = zSquared.y * -1.0;\n' +
-    '    }\n' +
-    '    return zSquared;\n' +
-    '}\n' +
-    'vec2 addComplex(vec2 z, vec2 c)\n' +
-    '{\n' +
-    '    vec2 zAdded;\n' +
-    '    zAdded.x = z.x + c.x;\n' +
-    '    zAdded.y = z.y + c.y;\n' +
-    '    return zAdded;\n' +
-    '}\n' +
-    'float magnitude(vec2 z)\n' +
-    '{\n' +
-    '    return sqrt((z.x * z.x) + (z.y * z.y));\n' +
-    '}\n' +
-    '\n' +
-    'void main()\n' +
-    '{\n' +
-    '    vec2 uv = gl_FragCoord.xy /iResolution.xy;\n' +
-    '    vec2 c = 4.0 * uv - 2.0;\n' +
-    '    c = c / zoomMultiplier;\n' +
-    '    c = c - mouseDelta;\n' +
-    '\n' +
-    '    vec4 color = vec4(52.0/255.0, 204.0/235.0, 235.0/255.0, 1.0);\n' +
-    '\n' +
-    '    vec2 z = vec2(0.0, 0.0);\n' +
-    '\n' +
-    '    for(int i = 0; i< 200; i++)\n' +
-    '    {\n' +
-    '        z = addComplex( squareComplex(z), c);\n' +
-    '        if(magnitude(z) > 2.0)\n' +
-    '        {\n' +
-    '            color = vec4(float(i)/200.0, float(i)/200.0, 0.0, 1.0);\n' +
-    '            break;\n' +
-    '        }\n' +
-    '    }\n' +
-    '    gl_FragColor = color;\n' +
-    '}\n' +
-    '\n' +
-    '\n'
 
-console.log(mandelbrot);
+let uniforms= {
+    iResolution: {value: new THREE.Vector3()},
+    mouseDelta: {value: new THREE.Vector2()},
+    mousePos: {value: new THREE.Vector2()},
+    zoomMultiplier: {value: 1.0}};
 
-const planeGeometry = new THREE.PlaneGeometry(2, 2);
-const customMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-        iResolution: {value: new THREE.Vector3()},
-        mouseDelta: {value: new THREE.Vector2()},
-        zoomMultiplier: {value: 1.0}
-    },
-    fragmentShader: mandelbrot,
+let planeGeometry = new THREE.PlaneGeometry(2, 2);
+const mandelbrotMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    fragmentShader: mandelbrotShader,
     vertexShader: standard,
 });
-const plane = new THREE.Mesh(planeGeometry, customMaterial);
+const juliaMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    fragmentShader: juliaShader,
+    vertexShader: standard,
+});
+const burningShipMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    fragmentShader: burningShipShader,
+    vertexShader: standard,
+});
+
+let plane = new THREE.Mesh(planeGeometry, mandelbrotMaterial);
 plane.castShadow = false;
 plane.receiveShadow = true;
 
 scene.add(plane);
 
-window.addEventListener('mousemove', onMouseMove);
-window.addEventListener('mousedown', onMouseDown);
-window.addEventListener('mouseup', onMouseUp);
-window.addEventListener('wheel', onWheel);
+canvas.addEventListener('mousemove', onMouseMove);
+canvas.addEventListener('mousedown', onMouseDown);
+canvas.addEventListener('mouseup', onMouseUp);
+canvas.addEventListener('wheel', onWheel);
+
 
 function animate() {
     requestAnimationFrame(animate);
-    customMaterial.uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
+    uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
     renderer.render(scene, camera);
 }
 
@@ -114,11 +88,16 @@ function onMouseMove()
 {
     if(mouseDown)
     {
-        customMaterial.uniforms.mouseDelta.value.x = mouseTotalDelta.x + (event.offsetX / window.innerWidth - mouseStart.x);
-        customMaterial.uniforms.mouseDelta.value.y = mouseTotalDelta.y + (1.0 - (event.offsetY / window.innerHeight) - mouseStart.y);
-
+        uniforms.mouseDelta.value.x = mouseTotalDelta.x + (event.offsetX / window.innerWidth - mouseStart.x);
+        uniforms.mouseDelta.value.y = mouseTotalDelta.y + (1.0 - (event.offsetY / window.innerHeight) - mouseStart.y);
     }
-
+    else
+    {
+        uniforms.mousePos.value.x = 4.0 * (event.offsetX / canvas.clientWidth) - 2.0;
+        uniforms.mousePos.value.y = 4.0 * (1.0 - event.offsetY / canvas.clientHeight) - 2.0;
+        console.log('x: ' + uniforms.mousePos.value.x);
+        console.log('y: ' + uniforms.mousePos.value.y);
+    }
 }
 
 function onMouseDown()
@@ -140,11 +119,27 @@ function onMouseUp()
 
 function onWheel()
 {
-
-    customMaterial.uniforms.zoomMultiplier.value = customMaterial.uniforms.zoomMultiplier.value - (event.deltaY * 0.125 * Math.pow(10, (Math.floor(Math.log10(customMaterial.uniforms.zoomMultiplier.value)))-1));
-
-    console.log(Math.floor(Math.log10(customMaterial.uniforms.zoomMultiplier.value)));
-    console.log(customMaterial.uniforms.zoomMultiplier.value)
+    uniforms.zoomMultiplier.value = uniforms.zoomMultiplier.value -
+        (event.deltaY * 0.125 * Math.pow(10, (Math.floor(Math.log10(uniforms.zoomMultiplier.value)))-1));
 }
+
+MandelbrotButton.addEventListener("click", function (){
+    plane.material = mandelbrotMaterial;
+    //uniforms.mouseDelta = (0.0, 0.0);
+    //uniforms.zoomMultiplier = 0.0;
+});
+
+JuliaButton.addEventListener("click", function (){
+    plane.material = juliaMaterial;
+    //uniforms.mouseDelta = (0.0, 0.0);
+    //uniforms.zoomMultiplier = 0.0;
+});
+
+BurningshipButton.addEventListener("click", function() {
+    plane.material = burningShipMaterial;
+    //uniforms.mouseDelta = (0.0, 0.0);
+    //uniforms.zoomMultiplier = 0.0;
+});
+
 
 animate();

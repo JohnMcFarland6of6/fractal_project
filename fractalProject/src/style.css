@@ -1,6 +1,32 @@
 canvas
 {
-    position: fixed;
-    top: 0;
-    left: 0;
+    #position: fixed;
+    #top: 0;
+    #left: 100px;
+}
+.parent
+{
+    font-size: 0;
+    width: 250px;
+}
+button
+{
+    position: static;
+    font-size: 10px;
+    font-family: "Franklin Gothic Medium" ;
+    padding-left: 3px;
+    text-align: left;
+    background-color: #292929;
+    color: white;
+    border-style: none none solid solid;
+    border-width: 1px;
+    border-color: black;
+    width: calc(100% /3 );
+}
+button:hover
+{
+    background-color: #717171;
+    transform: scale(105%);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+
 }

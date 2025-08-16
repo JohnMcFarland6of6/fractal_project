@@ -1,6 +1,7 @@
 uniform vec3 iResolution;
 uniform vec2 mouseDelta;
 uniform float zoomMultiplier;
+uniform vec2 mousePos;
 vec2 squareComplex(vec2 z)
 {
     vec2 zSquared;
@@ -23,21 +24,26 @@ float magnitude(vec2 z)
 void main()
 {
     vec2 uv = gl_FragCoord.xy /iResolution.xy;
-    vec2 c = 4.0 * uv - 2.0;
-    c = c / zoomMultiplier;
-    c = c - mouseDelta;
+    vec2 z = 4.0 * uv - 2.0;
+    z = z / zoomMultiplier;
+    z = z - mouseDelta;
+    vec2 c;
+    c.x = mousePos.x;
+    c.y = mousePos.y;
 
-
-    vec4 color = vec4(52.0/255.0, 204.0/235.0, 235.0/255.0, 1.0);
-
-    vec2 z = vec2(0.0, 0.0);
+    vec4 color = vec4(51.0/255.0, 102.0/255.0, 153.0/255.0, 1.0);
+    vec4 purple = vec4(0.0/255.0, 0.0/255.0, 0.0/255.0, 1.0);
+    //vec2 z = vec2(0.0, 0.0);
 
     for(int i = 0; i< 200; i++)
     {
         z = addComplex( squareComplex(z), c);
         if(magnitude(z) > 2.0)
         {
-            color = vec4(float(i)/200.0, float(i)/200.0, 0.0, 1.0);
+            float r = (float(i*i) / (255.0 * 255.0));
+            float g = (float(i) / 255.0);
+            float b = purple.b;
+            color = vec4(r,g,b, 1.0);
             break;
         }
     }
