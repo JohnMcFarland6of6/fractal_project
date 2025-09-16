@@ -20,11 +20,11 @@ const renderer = new THREE.WebGLRenderer({canvas});
 renderer.setPixelRatio(window.devicePixelRatio);
 canvas.width = DIMENSIONS;
 canvas.height = DIMENSIONS;
-console.log(canvas.width)
 renderer.setSize( canvas.width, canvas.height);
 renderer.render(scene, camera);
 
 let mouseDown = false;
+let coordLock = false;
 let mouseStart = new THREE.Vector2();
 let mouseEnd = new THREE.Vector2();
 let mouseTotalDelta = new THREE.Vector2();
@@ -76,8 +76,23 @@ canvas.addEventListener('mousemove', onMouseMove);
 canvas.addEventListener('mousedown', onMouseDown);
 canvas.addEventListener('mouseup', onMouseUp);
 canvas.addEventListener('wheel', onWheel);
+window.addEventListener('keydown', function (event){
+    if (event.code === 'Space')
+    {
+        if(plane.material == juliaMaterial)
+        {
+            if(coordLock)
+            {
+                coordLock = false;
+            }
+            else
+            {
+                coordLock = true;
+            }
+        }
 
-
+    }
+});
 function animate() {
     requestAnimationFrame(animate);
     uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
@@ -88,15 +103,19 @@ function onMouseMove()
 {
     if(mouseDown)
     {
-        uniforms.mouseDelta.value.x = mouseTotalDelta.x + (event.offsetX / window.innerWidth - mouseStart.x);
-        uniforms.mouseDelta.value.y = mouseTotalDelta.y + (1.0 - (event.offsetY / window.innerHeight) - mouseStart.y);
+        uniforms.mouseDelta.value.x = mouseTotalDelta.x + 4.0*(event.offsetX / window.innerWidth - mouseStart.x)/uniforms.zoomMultiplier.value;
+        uniforms.mouseDelta.value.y = mouseTotalDelta.y + 4.0*(1.0 - (event.offsetY / window.innerHeight) - mouseStart.y)/uniforms.zoomMultiplier.value;
     }
     else
     {
-        uniforms.mousePos.value.x = 4.0 * (event.offsetX / canvas.clientWidth) - 2.0;
-        uniforms.mousePos.value.y = 4.0 * (1.0 - event.offsetY / canvas.clientHeight) - 2.0;
-        console.log('x: ' + uniforms.mousePos.value.x);
-        console.log('y: ' + uniforms.mousePos.value.y);
+        if(!coordLock)
+        {
+            uniforms.mousePos.value.x = 4.0 * (event.offsetX / canvas.clientWidth) - 2.0;
+            uniforms.mousePos.value.y = 4.0 * (1.0 - event.offsetY / canvas.clientHeight) - 2.0;
+        }
+
+        //console.log('x: ' + uniforms.mousePos.value.x);
+        //console.log('y: ' + uniforms.mousePos.value.y);
     }
 }
 
@@ -113,8 +132,8 @@ function onMouseUp()
     mouseDown = false;
     mouseEnd.x = (event.offsetX / window.innerWidth);
     mouseEnd.y = 1.0 - (event.offsetY / window.innerHeight);
-    mouseTotalDelta.x = mouseTotalDelta.x - (mouseStart.x - mouseEnd.x);
-    mouseTotalDelta.y = mouseTotalDelta.y - (mouseStart.y - mouseEnd.y);
+    mouseTotalDelta.x = mouseTotalDelta.x - 4.0*(mouseStart.x - mouseEnd.x)/uniforms.zoomMultiplier.value;
+    mouseTotalDelta.y = mouseTotalDelta.y - 4.0*(mouseStart.y - mouseEnd.y)/uniforms.zoomMultiplier.value;
 }
 
 function onWheel()
@@ -124,21 +143,24 @@ function onWheel()
 }
 
 MandelbrotButton.addEventListener("click", function (){
+    coordLock = false;
     plane.material = mandelbrotMaterial;
-    //uniforms.mouseDelta = (0.0, 0.0);
-    //uniforms.zoomMultiplier = 0.0;
+    uniforms.mouseDelta.value.set(0.0, 0.0);
+    uniforms.zoomMultiplier.value = 1.0;
 });
 
 JuliaButton.addEventListener("click", function (){
+    coordLock = false;
     plane.material = juliaMaterial;
-    //uniforms.mouseDelta = (0.0, 0.0);
-    //uniforms.zoomMultiplier = 0.0;
+    uniforms.mouseDelta.value.set(0.0, 0.0);
+    uniforms.zoomMultiplier.value = 1.0;
 });
 
 BurningshipButton.addEventListener("click", function() {
+    coordLock = false;
     plane.material = burningShipMaterial;
-    //uniforms.mouseDelta = (0.0, 0.0);
-    //uniforms.zoomMultiplier = 0.0;
+    uniforms.mouseDelta.value.set(0.0, 0.0);
+    uniforms.zoomMultiplier.value = 1.0;
 });
 
 
